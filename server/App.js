@@ -1,6 +1,6 @@
 /**
- * App.js (entry point)
- * Updated to use modular route structure.
+ * App.js (deployment-ready)
+ * Full MERN stack: backend + serve React frontend
  */
 
 require("dotenv").config();
@@ -12,6 +12,8 @@ const mongoose = require("mongoose");
 const http = require("http");
 const { Server } = require("socket.io");
 const path = require("path");
+
+// Routes
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const messageRoutes = require("./routes/messageRoutes");
@@ -19,11 +21,11 @@ const roomRoutes = require("./routes/roomRoutes");
 const matchRoutes = require("./routes/matchRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
 const contactRoutes = require("./routes/contact");
-// const adminRoutes = require('./routes/adminRoutes')
+
 const app = express();
 
-// ✅ Middleware
-app.use(express.json());  
+// ----------------- MIDDLEWARE -----------------
+app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
@@ -32,25 +34,22 @@ app.use(
   })
 );
 
-// ✅ MongoDB Connection
+// ----------------- MONGODB -----------------
 mongoose
   .connect(process.env.MONGO_URL)
   .then(() => console.log("✅ Connected to MongoDB"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// ✅ API Routes
+// ----------------- API ROUTES -----------------
 app.use("/api", authRoutes);
-app.use("/api/users", userRoutes); // ✨ UPDATED: Changed from /api/user to /api/users
+app.use("/api/users", userRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/match", matchRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api", contactRoutes);
-// app.use('/api/admin', adminRoutes);
 
-
-
-// ✅ Socket.io Setup
+// ----------------- SOCKET.IO -----------------
 const Message = require("./Message");
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -61,6 +60,7 @@ const io = new Server(server, {
 });
 
 const onlineUsers = new Map();
+
 io.on("connection", (socket) => {
   console.log("🟢 Socket connected:", socket.id);
 
@@ -93,8 +93,18 @@ io.on("connection", (socket) => {
   });
 });
 
-// ✅ Server Start
+// ----------------- DEPLOYMENT: Serve React Build -----------------
+const __dirname1 = path.resolve();
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname1, "client/build")));
+
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname1, "client/build", "index.html"));
+  });
+}
+
+// ----------------- START SERVER -----------------
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });

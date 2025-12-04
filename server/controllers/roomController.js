@@ -80,10 +80,26 @@ exports.getMyRooms = async (req, res) => {
 // GET single room by ID
 exports.getRoomById = async (req, res) => {
   try {
-    const room = await Room.findById(req.params.id).populate("owner", "email");
+    const room = await Room.findById(req.params.id)
+      .populate({
+        path: 'owner',
+        select: 'name email contactInfo',
+        options: { strictPopulate: false }
+      });
+    
     if (!room) return res.status(404).json({ message: "Room not found" });
-    res.status(200).json(room);
+    
+    // Convert to plain object and handle potential null owner
+    const roomObj = room.toObject();
+    
+    // If owner is populated, ensure contactInfo exists
+    if (roomObj.owner) {
+      roomObj.owner.contactInfo = roomObj.owner.contactInfo || {};
+    }
+    
+    res.status(200).json(roomObj);
   } catch (err) {
+    console.error('Error in getRoomById:', err);
     res.status(500).json({ message: "Error fetching room", error: err.message });
   }
 };
