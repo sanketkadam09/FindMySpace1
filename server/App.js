@@ -94,12 +94,12 @@ io.on("connection", (socket) => {
 });
 
 // ----------------- DEPLOYMENT: Serve React Build -----------------
-const __dirname1 = path.resolve();
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname1, "client/build")));
+  // Correct path: server → ../client/build
+  app.use(express.static(path.join(__dirname, "../client/build")));
 
   app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname1, "client/build", "index.html"));
+    res.sendFile(path.join(__dirname, "../client/build/index.html"));
   });
 }
 
